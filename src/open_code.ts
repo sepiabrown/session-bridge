@@ -88,5 +88,8 @@ export const SessionBridgePlugin: Plugin = async (input) => {
 export default SessionBridgePlugin
 
 function formatToolResult(result: CheckpointResult) {
+  if (result.status === "complete") {
+    return `Checkpoint created: ${result.checkpointTitle}\nContinuation: ${result.continuationTitle}`
+  }
   return JSON.stringify(result, null, 2)
 }

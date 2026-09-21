@@ -48,8 +48,11 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
     },
     context,
   )
-  const result = JSON.parse(typeof checkpointOutput === "string" ? checkpointOutput : checkpointOutput.output)
-  expect(result.status).toBe("complete")
+  expect(checkpointOutput).toBe(
+    "Checkpoint created: 260915___previous\nContinuation: 00 260915___previous",
+  )
+  expect(checkpointOutput).not.toContain("operationID")
+  expect(checkpointOutput).not.toContain("sessionID")
   expect(client.sessions.get("fork-1")?.messages).toHaveLength(2)
   expect(client.sessions.get("source")?.title).toBe("00 260915___previous")
 })

@@ -14,6 +14,7 @@ Implement a portable Session Bridge whose OpenCode-compatible plugin creates an 
 - [x] Support platform-neutral setup and Nix development shells
 - [x] Verify interfaces, behavior, build, and module boundaries
 - [x] Allocate numeric continuation prefixes and make continuation titles optional
+- [x] Minimize successful native tool output while retaining durable evidence
 
 ## Decisions
 - Use a hybrid core plus native OpenCode-compatible plugin plus receipt-gated CLI/MCP entrances.
@@ -29,9 +30,10 @@ Implement a portable Session Bridge whose OpenCode-compatible plugin creates an 
 - Project setup derives a relative plugin import from the checkout and target paths and refuses to overwrite different existing content without an explicit `--force`.
 - Setup documentation uses generic Windows, Linux, and macOS paths; `flake.nix` supplies Bun, Node.js, and Git on Linux and Darwin systems supported by Nix.
 - Automatic continuation naming retains a leading `NN` source prefix; otherwise it allocates the smallest unused `NN` and produces `NN <checkpointTitle>`. Explicit continuation titles remain valid overrides.
+- Successful native tool output contains only checkpoint and continuation titles. Partial and blocked results remain diagnostic, while full operation evidence stays in the journal.
 
 ## Evidence
-- `bun test`: 19 tests pass, covering exact boundary resolution, numeric continuation allocation, legacy-prefix migration, explicit overrides, direct and receipt execution, replay rejection, partial effects, plugin integration, transcript archival, and project setup.
+- `bun test`: 19 tests pass, covering exact boundary resolution, concise native output, numeric continuation allocation, legacy-prefix migration, explicit overrides, direct and receipt execution, replay rejection, partial effects, plugin integration, transcript archival, and project setup.
 - `bun run typecheck`: passes.
 - `bun run build`: five public entrypoints bundle successfully.
 - `flake.lock` parses as valid JSON; full Nix evaluation requires a Linux or macOS environment with Nix installed.

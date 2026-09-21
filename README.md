@@ -20,6 +20,10 @@ leading numeric prefix (`00`, `01`, ...) or allocates the smallest unused prefix
 and produces `NN <checkpointTitle>`. An explicit `continuationTitle` remains
 available as an override.
 
+Successful native plugin calls return only the checkpoint and continuation
+titles. Full identifiers and operation progress remain in the durable operation
+journal; blocked and partial results retain detailed diagnostic output.
+
 The supported compatibility coordinates are current OpenCode 1.18.x and forks
 that preserve the OpenCode 1.2.20 server surface with the string-returning
 `@opencode-ai/plugin` 1.1.25 tool contract.

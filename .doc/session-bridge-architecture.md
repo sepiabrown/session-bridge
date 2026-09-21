@@ -43,6 +43,8 @@ OpenCode-compatible forks share this adapter when they preserve the OpenCode 1.2
 
 `src/open_code.ts` receives trusted native plugin context and can execute directly or issue a five-minute one-time receipt. `src/command_line.ts` and `src/model_context_protocol.ts` accept receipts, never raw session/message IDs as authorization. Receipts bind the host, source session, excluded request boundary, endpoint, confidence, expiry, and nonce. The replay ledger consumes each receipt once.
 
+Successful native calls return only the two resulting titles so routine evidence does not occupy future model context. Full operation identifiers and steps remain in the durable journal. Partial and blocked results return detailed JSON because recovery requires those diagnostics.
+
 ## Adding another host
 
 A new host must implement `CurrentRequestMethod` and `SessionCheckpointMethod`; automatic continuation naming additionally requires `ContinuationTitleMethod`. No adapter is added until the host can verify the current request boundary and its fork/rename results. `src/transcript_archives.ts` provides separate transcript-export behavior for unsupported hosts and always reports that the host session was not changed.
