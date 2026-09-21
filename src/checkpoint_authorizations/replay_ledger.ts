@@ -1,5 +1,5 @@
 import { join } from "node:path"
-import { blocked } from "../session_bridge.ts"
+import { blocked } from "../checkpoint_failures.ts"
 import { readJson, stateDirectory, withLock, writeJson } from "../session_bridge_state.ts"
 
 type ReplayState = Record<string, number>

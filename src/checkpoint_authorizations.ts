@@ -1,4 +1,5 @@
-import { blocked, type CurrentRequest } from "./session_bridge.ts"
+import { blocked } from "./checkpoint_failures.ts"
+import type { CurrentRequest } from "./session_bridge.ts"
 import type { ReceiptService } from "./checkpoint_authorizations/receipts.ts"
 import type { ReplayLedger } from "./checkpoint_authorizations/replay_ledger.ts"
 

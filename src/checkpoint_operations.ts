@@ -1,9 +1,8 @@
 import { createHash } from "node:crypto"
 import { join } from "node:path"
 import type { CheckpointAuthorization } from "./checkpoint_authorizations.ts"
+import { blocked, type BlockedCheckpoint } from "./checkpoint_failures.ts"
 import {
-  blocked,
-  type BlockedCheckpoint,
   type CheckpointResult,
   type CheckpointStep,
   type CompleteCheckpoint,

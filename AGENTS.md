@@ -1,5 +1,7 @@
 # Session Bridge Setup
 
+Project knowledge lives in `.doc/`. Do not create a parallel `.dosa/` knowledge path.
+
 When asked to install this repository for an OpenCode project, follow
 `INSTALL.md`. Clone or reuse Session Bridge at `<target-parent>/session-bridge`,
 run `bun install`, then run `bun run setup:open-code -- <target-directory>`.

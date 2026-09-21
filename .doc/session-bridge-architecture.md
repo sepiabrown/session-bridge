@@ -8,13 +8,18 @@ Session Bridge checkpoints a host conversation immediately before the current ch
 
 ```text
 validate trusted session context
-  -> validate explicit titles
+  -> validate checkpoint title
+  -> retain or allocate continuation prefix
   -> begin or recover durable operation
   -> select host checkpoint implementation
   -> create, rename, verify, and settle
 ```
 
-The public API entry point is `src/session_bridge.ts`. `src/current_requests.ts` handles request-boundary discovery, `src/checkpoint_authorizations.ts` handles trusted invocations and signed receipts, `src/checkpoint_operations.ts` handles idempotency and partial-operation records, and `src/session_checkpoints.ts` defines the host integration interface.
+The public API entry point is `src/session_bridge.ts`. `src/current_requests.ts` handles request-boundary discovery, `src/checkpoint_authorizations.ts` handles trusted invocations and signed receipts, `src/continuation_titles.ts` resolves the continuation namespace, `src/checkpoint_operations.ts` handles idempotency and partial-operation records, and `src/session_checkpoints.ts` defines the host integration interface.
+
+## Continuation title allocation
+
+`src/continuation_titles/open_code.ts` reads the active title and the project session-title catalogue. A leading numeric source prefix (`00`, `01`, ...) is retained. Otherwise the smallest unused non-negative prefix is selected and padded to at least two digits. The resulting title is `NN <checkpointTitle>`. Callers may still provide an explicit continuation title override.
 
 ## OpenCode request boundary
 
@@ -40,7 +45,7 @@ OpenCode-compatible forks share this adapter when they preserve the OpenCode 1.2
 
 ## Adding another host
 
-A new host must implement both `CurrentRequestMethod` and `SessionCheckpointMethod`. No adapter is added until the host can verify the current request boundary and its fork/rename results. `src/transcript_archives.ts` provides separate transcript-export behavior for unsupported hosts and always reports that the host session was not changed.
+A new host must implement `CurrentRequestMethod` and `SessionCheckpointMethod`; automatic continuation naming additionally requires `ContinuationTitleMethod`. No adapter is added until the host can verify the current request boundary and its fork/rename results. `src/transcript_archives.ts` provides separate transcript-export behavior for unsupported hosts and always reports that the host session was not changed.
 
 ## Project setup
 
@@ -48,4 +53,4 @@ A new host must implement both `CurrentRequestMethod` and `SessionCheckpointMeth
 
 ## Evidence
 
-`bun test` verifies exact OpenCode boundary resolution, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.
+`bun test` verifies exact OpenCode boundary resolution, numeric continuation allocation, legacy-prefix migration, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.

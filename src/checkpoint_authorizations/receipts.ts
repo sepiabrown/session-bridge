@@ -2,7 +2,8 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { z } from "zod"
-import { blocked, type CurrentRequest } from "../session_bridge.ts"
+import { blocked } from "../checkpoint_failures.ts"
+import type { CurrentRequest } from "../session_bridge.ts"
 import { stateDirectory } from "../session_bridge_state.ts"
 
 const currentRequestSchema = z.object({

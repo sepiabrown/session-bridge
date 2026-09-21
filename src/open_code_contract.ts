@@ -14,6 +14,7 @@ type RequestResult<T> = Promise<{ data?: T; error?: unknown }>
 
 export type OpenCodeClient = {
   session: {
+    list(input?: { query?: { directory?: string; limit?: number } }): RequestResult<OpenCodeSession[]>
     get(input: { path: { id: string }; query?: { directory?: string } }): RequestResult<OpenCodeSession>
     messages(input: {
       path: { id: string }

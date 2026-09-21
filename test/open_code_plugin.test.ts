@@ -20,7 +20,7 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
   directories.push(directory)
   process.env.SESSION_BRIDGE_STATE_DIR = directory
   const client = new OpenCodeHarness()
-  client.addSession({ id: "source", title: "latest 00 old", messages: checkpointConversation() })
+  client.addSession({ id: "source", title: "00 old", messages: checkpointConversation() })
   const hooks = await SessionBridgePlugin({
     client,
     directory: "C:/project",
@@ -45,12 +45,11 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
   const checkpointOutput = await hooks.tool!.session_checkpoint!.execute(
     {
       checkpointTitle: "260915___previous",
-      continuationTitle: "latest 00 260916___next",
     },
     context,
   )
   const result = JSON.parse(typeof checkpointOutput === "string" ? checkpointOutput : checkpointOutput.output)
   expect(result.status).toBe("complete")
   expect(client.sessions.get("fork-1")?.messages).toHaveLength(2)
-  expect(client.sessions.get("source")?.title).toBe("latest 00 260916___next")
+  expect(client.sessions.get("source")?.title).toBe("00 260915___previous")
 })

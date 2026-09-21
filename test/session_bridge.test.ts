@@ -6,6 +6,7 @@ import { FileReplayLedger } from "../src/checkpoint_authorizations/replay_ledger
 import { SignedReceiptService } from "../src/checkpoint_authorizations/receipts.ts"
 import { issueReceipt } from "../src/checkpoint_authorizations.ts"
 import { FileOperationJournal } from "../src/checkpoint_operations.ts"
+import { createOpenCodeContinuationTitleMethod } from "../src/continuation_titles/open_code.ts"
 import { resolve } from "../src/current_requests.ts"
 import { openCodeCurrentRequest } from "../src/current_requests/open_code.ts"
 import { checkpointSession } from "../src/session_bridge.ts"
@@ -29,7 +30,7 @@ describe("Session Bridge", () => {
       checkpointSessionID: "fork-1",
       excludedMessageID: "checkpoint-request",
     })
-    expect(setup.client.sessions.get("source")?.title).toBe("latest 00 260916___next")
+    expect(setup.client.sessions.get("source")?.title).toBe("00 260916___next")
     expect(setup.client.sessions.get("fork-1")?.title).toBe("260915___previous")
     expect(setup.client.sessions.get("fork-1")?.messages).toHaveLength(2)
   })
@@ -55,7 +56,7 @@ describe("Session Bridge", () => {
       failedStep: "continuation-renamed",
     })
     expect(setup.client.sessions.get("fork-1")?.title).toBe("260915___previous")
-    expect(setup.client.sessions.get("source")?.title).toBe("latest 00 old")
+    expect(setup.client.sessions.get("source")?.title).toBe("00 old")
   })
 
   test("executes through a signed receipt without raw identity arguments", async () => {
@@ -77,7 +78,7 @@ describe("Session Bridge", () => {
 async function createSetup() {
   const directory = await temporaryDirectory()
   const client = new OpenCodeHarness()
-  client.addSession({ id: "source", title: "latest 00 old", messages: checkpointConversation() })
+  client.addSession({ id: "source", title: "00 old", messages: checkpointConversation() })
   const current = await resolve(openCodeCurrentRequest, {
     client,
     sessionID: "source",
@@ -94,6 +95,7 @@ async function createSetup() {
         replay: new FileReplayLedger(join(directory, "replay.json")),
       },
       operations: new FileOperationJournal(join(directory, "operations")),
+      continuationTitles: [createOpenCodeContinuationTitleMethod(client)],
       methods: [createOpenCodeCheckpointMethod(client)],
     },
   }
@@ -104,7 +106,7 @@ function request(current: Awaited<ReturnType<typeof resolve<typeof openCodeCurre
     authorization: { type: "trusted-invocation" as const, current },
     names: {
       checkpointTitle: "260915___previous",
-      continuationTitle: "latest 00 260916___next",
+      continuationTitle: "00 260916___next",
     },
   }
 }

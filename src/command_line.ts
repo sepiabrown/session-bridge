@@ -12,7 +12,7 @@ export async function runCommandLine(arguments_: string[]) {
         authorization: { type: "signed-receipt", receipt: input.receipt },
         names: {
           checkpointTitle: input.checkpointTitle,
-          continuationTitle: input.continuationTitle,
+          ...(input.continuationTitle ? { continuationTitle: input.continuationTitle } : {}),
         },
       },
       await createPortableRuntime(),
@@ -52,7 +52,7 @@ function parseCheckpointArguments(arguments_: string[]) {
   return {
     receipt: requireArgument(values, "receipt"),
     checkpointTitle: requireArgument(values, "checkpoint-title"),
-    continuationTitle: requireArgument(values, "continuation-title"),
+    continuationTitle: values.get("continuation-title"),
   }
 }
 
@@ -65,7 +65,7 @@ function requireArgument(values: Map<string, string>, name: string) {
 function usage() {
   return [
     "Usage:",
-    "  session-bridge checkpoint --receipt <receipt> --checkpoint-title <title> --continuation-title <title>",
+    "  session-bridge checkpoint --receipt <receipt> --checkpoint-title <title> [--continuation-title <title>]",
     "  session-bridge probe",
   ].join("\n")
 }

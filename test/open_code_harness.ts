@@ -8,6 +8,8 @@ export class OpenCodeHarness implements OpenCodeClient {
   private forkNumber = 0
 
   readonly session = {
+    list: async () =>
+      this.response([...this.sessions.values()].map(({ messages: _messages, ...session }) => session)),
     get: async (input: { path: { id: string } }) => this.response(this.requireSession(input.path.id)),
     messages: async (input: { path: { id: string } }) =>
       this.response(structuredClone(this.requireSession(input.path.id).messages)),

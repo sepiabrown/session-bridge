@@ -1,6 +1,8 @@
 import { authorize, type AuthorizationInput, type AuthorizationServices } from "./checkpoint_authorizations.ts"
 import { begin, type CheckpointOperation, type OperationJournal } from "./checkpoint_operations.ts"
-import { requireExplicit, type CheckpointNames } from "./session_bridge/checkpoint_names.ts"
+import { blocked, isBlockedCheckpoint, type BlockedCheckpoint } from "./checkpoint_failures.ts"
+import { resolveContinuationTitle, type ContinuationTitleMethod } from "./continuation_titles.ts"
+import type { CheckpointNameRequest, CheckpointNames } from "./session_bridge/checkpoint_names.ts"
 import { select, type SessionCheckpointMethod } from "./session_checkpoints.ts"
 
 export type Confidence = "exact" | "verified" | "derived" | "heuristic" | "ambiguous"
@@ -44,29 +46,18 @@ export type PartialCheckpoint = {
   recovery: string
 }
 
-export type BlockedCheckpoint = {
-  status: "blocked"
-  reason:
-    | "unsupported-harness"
-    | "insufficient-confidence"
-    | "expired-authorization"
-    | "invalid-authorization"
-    | "replayed-authorization"
-    | "operation-conflict"
-    | "effect-uncertain"
-  error: string
-}
-
 export type CheckpointResult = CompleteCheckpoint | PartialCheckpoint | BlockedCheckpoint
+export { blocked, type BlockedCheckpoint } from "./checkpoint_failures.ts"
 
 export type CheckpointInput = {
   authorization: AuthorizationInput
-  names: CheckpointNames
+  names: CheckpointNameRequest
 }
 
 export type SessionBridgeRuntime = {
   authorizations: AuthorizationServices
   operations: OperationJournal
+  continuationTitles: ContinuationTitleMethod[]
   methods: SessionCheckpointMethod[]
 }
 
@@ -76,7 +67,7 @@ export async function checkpointSession(
 ): Promise<CheckpointResult> {
   try {
     const authorization = await authorize(input.authorization, runtime.authorizations)
-    const names = requireExplicit(input.names)
+    const names = await resolveContinuationTitle(input.names, authorization.current, runtime.continuationTitles)
     const operation = await begin({ authorization, names }, runtime.operations)
     if (operation.type === "completed") return operation.result
 
@@ -107,13 +98,4 @@ async function completeCheckpoint(
   } catch (error) {
     return operation.fail(error instanceof Error ? error.message : String(error))
   }
-}
-
-export function blocked(reason: BlockedCheckpoint["reason"], error: string): BlockedCheckpoint {
-  return { status: "blocked", reason, error }
-}
-
-function isBlockedCheckpoint(value: unknown): value is BlockedCheckpoint {
-  if (!value || typeof value !== "object") return false
-  return "status" in value && value.status === "blocked"
 }

@@ -11,10 +11,14 @@ raw session or message identifiers are not accepted as mutation authority.
 ## OpenCode compatibility
 
 Add `src/open_code.ts` as an OpenCode-compatible plugin, then call
-`session_checkpoint` with explicit `checkpointTitle` and
-`continuationTitle` values. The plugin resolves the current assistant message's
+`session_checkpoint` with an explicit `checkpointTitle`. The plugin resolves the current assistant message's
 user parent and forks before that parent, so the checkpoint request is
 not copied into the checkpoint.
+
+When `continuationTitle` is omitted, Session Bridge retains the source title's
+leading numeric prefix (`00`, `01`, ...) or allocates the smallest unused prefix
+and produces `NN <checkpointTitle>`. An explicit `continuationTitle` remains
+available as an override.
 
 The supported compatibility coordinates are current OpenCode 1.18.x and forks
 that preserve the OpenCode 1.2.20 server surface with the string-returning
@@ -47,11 +51,11 @@ harness, session, request boundary, API endpoint, expiry, and nonce.
 The CLI accepts no raw session or message identifiers:
 
 ```text
-session-bridge checkpoint --receipt <receipt> --checkpoint-title <checkpoint-title> --continuation-title <continuation-title>
+session-bridge checkpoint --receipt <receipt> --checkpoint-title <checkpoint-title> [--continuation-title <continuation-title>]
 ```
 
 Start the stdio MCP server with `session-bridge-mcp`. Its
-`session_checkpoint` tool accepts the same receipt and titles.
+`session_checkpoint` tool accepts the same receipt and optional title override.
 
 Receipts and operation evidence are stored under `~/.session-bridge` by
 default. Set `SESSION_BRIDGE_STATE_DIR` to choose another location. Set
@@ -63,9 +67,10 @@ it returns a blocked result rather than guessing a session.
 
 ## Other harnesses
 
-Harness support is added through two contracts:
+Harness support is added through three contracts:
 
 - current-request resolution proves the exact conversation boundary;
+- continuation-title allocation reads the host title namespace;
 - session checkpointing performs and verifies the harness mutation.
 
 A harness is not mutation-capable until both contracts are implemented and

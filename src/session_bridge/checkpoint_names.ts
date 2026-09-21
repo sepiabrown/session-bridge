@@ -1,13 +1,24 @@
+export type CheckpointNameRequest = {
+  checkpointTitle: string
+  continuationTitle?: string | undefined
+}
+
 export type CheckpointNames = {
   checkpointTitle: string
   continuationTitle: string
 }
 
-export function requireExplicit(input: CheckpointNames): CheckpointNames {
-  const checkpointTitle = requireTitle(input.checkpointTitle, "checkpointTitle")
-  const continuationTitle = requireTitle(input.continuationTitle, "continuationTitle")
-  if (checkpointTitle === continuationTitle) throw new Error("Checkpoint and continuation titles must differ.")
-  return { checkpointTitle, continuationTitle }
+export function requireCheckpointTitle(value: string) {
+  return requireTitle(value, "checkpointTitle")
+}
+
+export function completeNames(checkpointTitle: string, continuationTitle: string): CheckpointNames {
+  const validatedCheckpoint = requireCheckpointTitle(checkpointTitle)
+  const validatedContinuation = requireTitle(continuationTitle, "continuationTitle")
+  if (validatedCheckpoint === validatedContinuation) {
+    throw new Error("Checkpoint and continuation titles must differ.")
+  }
+  return { checkpointTitle: validatedCheckpoint, continuationTitle: validatedContinuation }
 }
 
 function requireTitle(value: string, field: string) {

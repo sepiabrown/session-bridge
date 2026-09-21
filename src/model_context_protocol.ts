@@ -19,7 +19,7 @@ export async function createSessionBridgeMcpServer() {
       inputSchema: z.object({
         receipt: z.string().min(1),
         checkpointTitle: z.string().min(1).max(200),
-        continuationTitle: z.string().min(1).max(200),
+        continuationTitle: z.string().min(1).max(200).optional(),
       }),
       annotations: { destructiveHint: false, idempotentHint: true },
     },
@@ -29,7 +29,7 @@ export async function createSessionBridgeMcpServer() {
           authorization: { type: "signed-receipt", receipt: input.receipt },
           names: {
             checkpointTitle: input.checkpointTitle,
-            continuationTitle: input.continuationTitle,
+            ...(input.continuationTitle ? { continuationTitle: input.continuationTitle } : {}),
           },
         },
         runtime,

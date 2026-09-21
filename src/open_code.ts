@@ -4,6 +4,7 @@ import { issueReceipt } from "./checkpoint_authorizations.ts"
 import { FileReplayLedger } from "./checkpoint_authorizations/replay_ledger.ts"
 import { SignedReceiptService } from "./checkpoint_authorizations/receipts.ts"
 import { FileOperationJournal } from "./checkpoint_operations.ts"
+import { createOpenCodeContinuationTitleMethod } from "./continuation_titles/open_code.ts"
 import { resolve } from "./current_requests.ts"
 import { openCodeCurrentRequest } from "./current_requests/open_code.ts"
 import type { OpenCodeClient } from "./open_code_contract.ts"
@@ -14,7 +15,12 @@ const pluginSchema = tool.schema
 
 const titleArguments = {
   checkpointTitle: pluginSchema.string().min(1).max(200).describe("Title for the checkpoint ending before this request"),
-  continuationTitle: pluginSchema.string().min(1).max(200).describe("New title for the still-active conversation"),
+  continuationTitle: pluginSchema
+    .string()
+    .min(1)
+    .max(200)
+    .optional()
+    .describe("Optional explicit title override for the still-active conversation"),
 }
 
 export const SessionBridgePlugin: Plugin = async (input) => {
@@ -22,6 +28,7 @@ export const SessionBridgePlugin: Plugin = async (input) => {
   const receipts = await SignedReceiptService.create()
   const authorizations = { receipts, replay: new FileReplayLedger() }
   const operations = new FileOperationJournal()
+  const continuationTitles = [createOpenCodeContinuationTitleMethod(client)]
   const methods = [createOpenCodeCheckpointMethod(client)]
 
   async function current(context: { sessionID: string; messageID: string; directory: string }) {
@@ -53,7 +60,7 @@ export const SessionBridgePlugin: Plugin = async (input) => {
               authorization: { type: "trusted-invocation", current: coordinate },
               names: args,
             },
-            { authorizations, operations, methods },
+            { authorizations, operations, continuationTitles, methods },
           )
           return formatToolResult(result)
         },
