@@ -27,8 +27,10 @@ session-bridge___unstable___00 + 260921~abc1234~summary
 ```
 
 When `continuationTitle` is omitted, Session Bridge retains the source title's
-leading numeric prefix (`00`, `01`, ...) or allocates the smallest unused prefix
-and produces `NN <checkpointTitle>`. An explicit `continuationTitle` remains
+leading numeric prefix (`00`, `01`, ...) only when its repository scope matches
+the new checkpoint. Otherwise it allocates the smallest unused prefix within
+that exact scope and produces `NN <checkpointTitle>`. Different repository
+scopes therefore each begin at `00`. An explicit `continuationTitle` remains
 available as an override.
 
 Successful native plugin calls return only the checkpoint and continuation

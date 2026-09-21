@@ -2,7 +2,7 @@ import type { ContinuationTitleMethod } from "../continuation_titles.ts"
 import type { CurrentRequest } from "../session_bridge.ts"
 import { unwrap, type OpenCodeClient } from "../open_code_contract.ts"
 
-const prefixPattern = /^(\d{2,})(?:\s|$)/
+const scopedPrefixPattern = /^(\d{2,})\s+([^~]+)~/
 
 export function createOpenCodeContinuationTitleMethod(
   source: OpenCodeClient | ((current: CurrentRequest) => OpenCodeClient),
@@ -24,22 +24,32 @@ export function createOpenCodeContinuationTitleMethod(
         ),
       ])
 
-      const retained = readPrefix(currentSession.title)
-      const prefix = retained ?? firstUnusedPrefix(sessions.map((session) => session.title))
+      const scope = readCheckpointScope(input.checkpointTitle)
+      const retained = readScopedPrefix(currentSession.title, scope)
+      const prefix = retained ?? firstUnusedPrefix(sessions.map((session) => session.title), scope)
       return `${formatPrefix(prefix)} ${input.checkpointTitle}`
     },
   }
 }
 
-export function readPrefix(title: string) {
-  const match = prefixPattern.exec(title)
+export function readCheckpointScope(checkpointTitle: string) {
+  const delimiterIndex = checkpointTitle.indexOf("~")
+  if (delimiterIndex <= 0) throw new Error("Scoped checkpoint title must begin with `<scope>~`.")
+  return checkpointTitle.slice(0, delimiterIndex)
+}
+
+export function readScopedPrefix(title: string, scope: string) {
+  const match = scopedPrefixPattern.exec(title)
   if (!match) return undefined
+  if (match[2] !== scope) return undefined
   const prefix = Number(match[1])
   return Number.isSafeInteger(prefix) ? prefix : undefined
 }
 
-export function firstUnusedPrefix(titles: string[]) {
-  const used = new Set(titles.map(readPrefix).filter((value): value is number => value !== undefined))
+export function firstUnusedPrefix(titles: string[], scope: string) {
+  const used = new Set(
+    titles.map((title) => readScopedPrefix(title, scope)).filter((value): value is number => value !== undefined),
+  )
   let prefix = 0
   while (used.has(prefix)) prefix += 1
   return prefix

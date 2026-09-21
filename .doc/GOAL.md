@@ -16,6 +16,7 @@ Implement a portable Session Bridge whose OpenCode-compatible plugin creates an 
 - [x] Allocate numeric continuation prefixes and make continuation titles optional
 - [x] Minimize successful native tool output while retaining durable evidence
 - [x] Derive deterministic repository scope from committed working folders
+- [x] Allocate numeric continuation prefixes independently per repository scope
 
 ## Decisions
 - Use a hybrid core plus native OpenCode-compatible plugin plus receipt-gated CLI/MCP entrances.
@@ -33,9 +34,10 @@ Implement a portable Session Bridge whose OpenCode-compatible plugin creates an 
 - Automatic continuation naming retains a leading `NN` source prefix; otherwise it allocates the smallest unused `NN` and produces `NN <checkpointTitle>`. Explicit continuation titles remain valid overrides.
 - Successful native tool output contains only checkpoint and continuation titles. Partial and blocked results remain diagnostic, while full operation evidence stays in the journal.
 - Checkpoint calls name the committed working folders. Session Bridge removes each basename from the first configurable worktree suffix delimiter (`___` by default), normalizes and deduplicates the scopes, joins them with `+`, and prepends the result with `~`.
+- Numeric continuation prefixes are scoped by the exact normalized repository scope. A prefix is retained only for the same scope; each distinct scope allocates its own smallest unused `NN` beginning at `00`.
 
 ## Evidence
-- `bun test`: 24 tests pass, covering working-scope normalization, custom suffix delimiters, exact boundary resolution, concise native output, numeric continuation allocation, legacy-prefix migration, explicit overrides, direct and receipt execution, replay rejection, partial effects, plugin integration, transcript archival, and project setup.
+- `bun test`: 26 tests pass, covering working-scope normalization, custom suffix delimiters, per-scope continuation allocation, scope transitions, exact boundary resolution, concise native output, legacy-prefix migration, explicit overrides, direct and receipt execution, replay rejection, partial effects, plugin integration, transcript archival, and project setup.
 - `bun run typecheck`: passes.
 - `bun run build`: five public entrypoints bundle successfully.
 - `flake.lock` parses as valid JSON; full Nix evaluation requires a Linux or macOS environment with Nix installed.
