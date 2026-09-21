@@ -1,0 +1,11 @@
+# Runtime folders (created on-demand, not committed)
+dag/
+dag-results/
+index/
+config/
+.local/
+
+# Build artifacts
+node_modules/
+package.json
+bun.lock

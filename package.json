@@ -1,0 +1,36 @@
+{
+  "name": "session-bridge",
+  "version": "0.1.0",
+  "description": "Exact, portable conversation checkpointing across agent harnesses",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "exports": {
+    ".": "./src/session_bridge.ts",
+    "./open-code": "./src/open_code.ts",
+    "./mcp": "./src/model_context_protocol.ts",
+    "./setup-open-code": "./src/setup_open_code.ts"
+  },
+  "bin": {
+    "session-bridge": "./src/command_line.ts",
+    "session-bridge-mcp": "./src/model_context_protocol.ts",
+    "session-bridge-setup": "./src/setup_open_code.ts"
+  },
+  "scripts": {
+    "build": "bun build ./src/session_bridge.ts ./src/open_code.ts ./src/command_line.ts ./src/model_context_protocol.ts ./src/setup_open_code.ts --outdir ./dist --target bun --format esm --external @opencode-ai/plugin",
+    "setup:open-code": "bun run src/setup_open_code.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "1.18.31",
+    "@types/bun": "1.3.13",
+    "typescript": "5.8.2"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.1.25"
+  }
+}
