@@ -18,6 +18,8 @@ export async function createSessionBridgeMcpServer() {
         "Redeem a trusted one-time receipt to checkpoint a conversation before its current request and retitle the continuation.",
       inputSchema: z.object({
         receipt: z.string().min(1),
+        workingFolders: z.array(z.string().min(1)).min(1),
+        worktreeSuffixDelimiter: z.string().min(1).max(16).optional(),
         checkpointTitle: z.string().min(1).max(200),
         continuationTitle: z.string().min(1).max(200).optional(),
       }),
@@ -27,6 +29,10 @@ export async function createSessionBridgeMcpServer() {
       const result = await checkpointSession(
         {
           authorization: { type: "signed-receipt", receipt: input.receipt },
+          workingFolders: input.workingFolders,
+          ...(input.worktreeSuffixDelimiter
+            ? { worktreeSuffixDelimiter: input.worktreeSuffixDelimiter }
+            : {}),
           names: {
             checkpointTitle: input.checkpointTitle,
             ...(input.continuationTitle ? { continuationTitle: input.continuationTitle } : {}),

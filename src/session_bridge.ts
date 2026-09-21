@@ -4,6 +4,7 @@ import { blocked, isBlockedCheckpoint, type BlockedCheckpoint } from "./checkpoi
 import { resolveContinuationTitle, type ContinuationTitleMethod } from "./continuation_titles.ts"
 import type { CheckpointNameRequest, CheckpointNames } from "./session_bridge/checkpoint_names.ts"
 import { select, type SessionCheckpointMethod } from "./session_checkpoints.ts"
+import { resolveWorkingScope, scopeCheckpointTitle, type WorkingScopeRequest } from "./working_scopes.ts"
 
 export type Confidence = "exact" | "verified" | "derived" | "heuristic" | "ambiguous"
 
@@ -49,7 +50,7 @@ export type PartialCheckpoint = {
 export type CheckpointResult = CompleteCheckpoint | PartialCheckpoint | BlockedCheckpoint
 export { blocked, type BlockedCheckpoint } from "./checkpoint_failures.ts"
 
-export type CheckpointInput = {
+export type CheckpointInput = WorkingScopeRequest & {
   authorization: AuthorizationInput
   names: CheckpointNameRequest
 }
@@ -67,7 +68,12 @@ export async function checkpointSession(
 ): Promise<CheckpointResult> {
   try {
     const authorization = await authorize(input.authorization, runtime.authorizations)
-    const names = await resolveContinuationTitle(input.names, authorization.current, runtime.continuationTitles)
+    const scope = resolveWorkingScope(input)
+    const names = await resolveContinuationTitle(
+      { ...input.names, checkpointTitle: scopeCheckpointTitle(scope, input.names.checkpointTitle) },
+      authorization.current,
+      runtime.continuationTitles,
+    )
     const operation = await begin({ authorization, names }, runtime.operations)
     if (operation.type === "completed") return operation.result
 

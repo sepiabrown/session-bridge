@@ -30,8 +30,8 @@ describe("Session Bridge", () => {
       checkpointSessionID: "fork-1",
       excludedMessageID: "checkpoint-request",
     })
-    expect(setup.client.sessions.get("source")?.title).toBe("00 260916___next")
-    expect(setup.client.sessions.get("fork-1")?.title).toBe("260915___previous")
+    expect(setup.client.sessions.get("source")?.title).toBe("00 session-bridge~260915___previous")
+    expect(setup.client.sessions.get("fork-1")?.title).toBe("session-bridge~260915___previous")
     expect(setup.client.sessions.get("fork-1")?.messages).toHaveLength(2)
   })
 
@@ -55,7 +55,7 @@ describe("Session Bridge", () => {
       checkpointSessionID: "fork-1",
       failedStep: "continuation-renamed",
     })
-    expect(setup.client.sessions.get("fork-1")?.title).toBe("260915___previous")
+    expect(setup.client.sessions.get("fork-1")?.title).toBe("session-bridge~260915___previous")
     expect(setup.client.sessions.get("source")?.title).toBe("00 old")
   })
 
@@ -65,6 +65,7 @@ describe("Session Bridge", () => {
     const result = await checkpointSession(
       {
         authorization: { type: "signed-receipt", receipt },
+        workingFolders: request(setup.current).workingFolders,
         names: request(setup.current).names,
       },
       setup.runtime,
@@ -104,9 +105,9 @@ async function createSetup() {
 function request(current: Awaited<ReturnType<typeof resolve<typeof openCodeCurrentRequest>>>) {
   return {
     authorization: { type: "trusted-invocation" as const, current },
+    workingFolders: ["session-bridge___unstable___00"],
     names: {
       checkpointTitle: "260915___previous",
-      continuationTitle: "00 260916___next",
     },
   }
 }

@@ -11,9 +11,20 @@ raw session or message identifiers are not accepted as mutation authority.
 ## OpenCode compatibility
 
 Add `src/open_code.ts` as an OpenCode-compatible plugin, then call
-`session_checkpoint` with an explicit `checkpointTitle`. The plugin resolves the current assistant message's
+`session_checkpoint` with the repository `workingFolders` and an explicit
+`checkpointTitle`. The plugin resolves the current assistant message's
 user parent and forks before that parent, so the checkpoint request is
 not copied into the checkpoint.
+
+Each working folder is reduced to its basename, cut at the first `___` by
+default, and normalized to kebab-case. Scopes are deduplicated and joined with
+`+`, then prepended to the checkpoint title with `~`. Override the cutoff marker
+with `worktreeSuffixDelimiter` when a project uses another worktree convention.
+
+```text
+session-bridge___unstable___00 + 260921~abc1234~summary
+-> session-bridge~260921~abc1234~summary
+```
 
 When `continuationTitle` is omitted, Session Bridge retains the source title's
 leading numeric prefix (`00`, `01`, ...) or allocates the smallest unused prefix
@@ -55,7 +66,7 @@ harness, session, request boundary, API endpoint, expiry, and nonce.
 The CLI accepts no raw session or message identifiers:
 
 ```text
-session-bridge checkpoint --receipt <receipt> --checkpoint-title <checkpoint-title> [--continuation-title <continuation-title>]
+session-bridge checkpoint --receipt <receipt> --working-folders <folder[,folder]> --checkpoint-title <checkpoint-title> [--worktree-suffix-delimiter <delimiter>] [--continuation-title <title>]
 ```
 
 Start the stdio MCP server with `session-bridge-mcp`. Its
@@ -73,6 +84,7 @@ it returns a blocked result rather than guessing a session.
 
 Harness support is added through three contracts:
 
+- working-scope normalization identifies the repositories represented by the title;
 - current-request resolution proves the exact conversation boundary;
 - continuation-title allocation reads the host title namespace;
 - session checkpointing performs and verifies the harness mutation.

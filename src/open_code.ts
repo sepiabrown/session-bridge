@@ -14,6 +14,16 @@ import { createOpenCodeCheckpointMethod } from "./session_checkpoints/open_code.
 const pluginSchema = tool.schema
 
 const titleArguments = {
+  workingFolders: pluginSchema
+    .array(pluginSchema.string().min(1))
+    .min(1)
+    .describe("Repository folder paths or names included in this checkpoint"),
+  worktreeSuffixDelimiter: pluginSchema
+    .string()
+    .min(1)
+    .max(16)
+    .optional()
+    .describe("Optional worktree suffix cutoff marker; defaults to ___"),
   checkpointTitle: pluginSchema.string().min(1).max(200).describe("Title for the checkpoint ending before this request"),
   continuationTitle: pluginSchema
     .string()
@@ -58,7 +68,14 @@ export const SessionBridgePlugin: Plugin = async (input) => {
           const result = await checkpointSession(
             {
               authorization: { type: "trusted-invocation", current: coordinate },
-              names: args,
+              workingFolders: args.workingFolders,
+              ...(args.worktreeSuffixDelimiter
+                ? { worktreeSuffixDelimiter: args.worktreeSuffixDelimiter }
+                : {}),
+              names: {
+                checkpointTitle: args.checkpointTitle,
+                ...(args.continuationTitle ? { continuationTitle: args.continuationTitle } : {}),
+              },
             },
             { authorizations, operations, continuationTitles, methods },
           )

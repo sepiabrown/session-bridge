@@ -8,14 +8,19 @@ Session Bridge checkpoints a host conversation immediately before the current ch
 
 ```text
 validate trusted session context
-  -> validate checkpoint title
+  -> normalize committed working-folder scope
+  -> scope and validate checkpoint title
   -> retain or allocate continuation prefix
   -> begin or recover durable operation
   -> select host checkpoint implementation
   -> create, rename, verify, and settle
 ```
 
-The public API entry point is `src/session_bridge.ts`. `src/current_requests.ts` handles request-boundary discovery, `src/checkpoint_authorizations.ts` handles trusted invocations and signed receipts, `src/continuation_titles.ts` resolves the continuation namespace, `src/checkpoint_operations.ts` handles idempotency and partial-operation records, and `src/session_checkpoints.ts` defines the host integration interface.
+The public API entry point is `src/session_bridge.ts`. `src/working_scopes.ts` normalizes repository scope, `src/current_requests.ts` handles request-boundary discovery, `src/checkpoint_authorizations.ts` handles trusted invocations and signed receipts, `src/continuation_titles.ts` resolves the continuation namespace, `src/checkpoint_operations.ts` handles idempotency and partial-operation records, and `src/session_checkpoints.ts` defines the host integration interface.
+
+## Working-folder scope
+
+Checkpoint callers provide the repository folders represented by the work. `src/working_scopes.ts` takes each basename, removes it from the first worktree suffix delimiter (`___` by default), normalizes the semantic prefix to kebab-case, deduplicates scopes, and joins multiple scopes with `+`. A custom `worktreeSuffixDelimiter` supports other worktree naming conventions. The scope is prepended to the caller's checkpoint title with `~` before operation identity is computed.
 
 ## Continuation title allocation
 
@@ -55,4 +60,4 @@ A new host must implement `CurrentRequestMethod` and `SessionCheckpointMethod`; 
 
 ## Evidence
 
-`bun test` verifies exact OpenCode boundary resolution, numeric continuation allocation, legacy-prefix migration, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.
+`bun test` verifies working-scope normalization, custom suffix delimiters, exact OpenCode boundary resolution, numeric continuation allocation, legacy-prefix migration, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.
