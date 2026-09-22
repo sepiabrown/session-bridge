@@ -33,6 +33,10 @@ that exact scope and produces `NN <checkpointTitle>`. Different repository
 scopes therefore each begin at `00`. An explicit `continuationTitle` remains
 available as an override.
 
+When the active title has the same scope and ends with `(fork #N)`, allocation
+starts at its current numeric prefix plus one and advances past any occupied
+slots. Non-fork sessions retain their current same-scope prefix.
+
 Successful native plugin calls return only the checkpoint and continuation
 titles. Full identifiers and operation progress remain in the durable operation
 journal; blocked and partial results retain detailed diagnostic output.

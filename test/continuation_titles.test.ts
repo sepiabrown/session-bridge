@@ -3,6 +3,7 @@ import { resolveContinuationTitle } from "../src/continuation_titles.ts"
 import {
   createOpenCodeContinuationTitleMethod,
   firstUnusedPrefix,
+  hasForkSuffix,
   readCheckpointScope,
   readScopedPrefix,
 } from "../src/continuation_titles/open_code.ts"
@@ -67,6 +68,33 @@ describe("continuation titles", () => {
     expect(names.continuationTitle).toBe("00 aoidosa-nf~260917~abc1234~summary")
   })
 
+  test("advances the current scoped prefix for a fork", async () => {
+    const client = new OpenCodeHarness()
+    client.addSession({ id: "source", title: "03 session-bridge~previous (fork #2)", messages: [] })
+
+    const names = await resolveContinuationTitle(
+      { checkpointTitle: "session-bridge~260917~abc1234~summary" },
+      currentRequest(),
+      [createOpenCodeContinuationTitleMethod(client)],
+    )
+
+    expect(names.continuationTitle).toBe("04 session-bridge~260917~abc1234~summary")
+  })
+
+  test("skips occupied scoped prefixes after a fork", async () => {
+    const client = new OpenCodeHarness()
+    client.addSession({ id: "source", title: "03 session-bridge~previous (fork #1)", messages: [] })
+    client.addSession({ id: "slot-4", title: "04 session-bridge~occupied", messages: [] })
+
+    const names = await resolveContinuationTitle(
+      { checkpointTitle: "session-bridge~260917~abc1234~summary" },
+      currentRequest(),
+      [createOpenCodeContinuationTitleMethod(client)],
+    )
+
+    expect(names.continuationTitle).toBe("05 session-bridge~260917~abc1234~summary")
+  })
+
   test("migrates a legacy latest title to the first numeric prefix", async () => {
     const client = new OpenCodeHarness()
     client.addSession({ id: "source", title: "latest 00 previous", messages: [] })
@@ -99,6 +127,8 @@ describe("continuation titles", () => {
     expect(readScopedPrefix("100 session-bridge~title", "session-bridge")).toBe(100)
     expect(readScopedPrefix("00 codosa~title", "session-bridge")).toBeUndefined()
     expect(readScopedPrefix("latest 00 session-bridge~title", "session-bridge")).toBeUndefined()
+    expect(hasForkSuffix("00 session-bridge~title (fork #12)")).toBe(true)
+    expect(hasForkSuffix("00 session-bridge~title (fork #12) more")).toBe(false)
     expect(firstUnusedPrefix(["00 session-bridge~one", "02 session-bridge~three"], "session-bridge")).toBe(1)
   })
 })

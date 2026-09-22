@@ -3,6 +3,7 @@ import type { CurrentRequest } from "../session_bridge.ts"
 import { unwrap, type OpenCodeClient } from "../open_code_contract.ts"
 
 const scopedPrefixPattern = /^(\d{2,})\s+([^~]+)~/
+const forkSuffixPattern = / \(fork #\d+\)$/
 
 export function createOpenCodeContinuationTitleMethod(
   source: OpenCodeClient | ((current: CurrentRequest) => OpenCodeClient),
@@ -26,7 +27,13 @@ export function createOpenCodeContinuationTitleMethod(
 
       const scope = readCheckpointScope(input.checkpointTitle)
       const retained = readScopedPrefix(currentSession.title, scope)
-      const prefix = retained ?? firstUnusedPrefix(sessions.map((session) => session.title), scope)
+      const titles = sessions.map((session) => session.title)
+      const prefix =
+        retained === undefined
+          ? firstUnusedPrefix(titles, scope)
+          : hasForkSuffix(currentSession.title)
+            ? firstUnusedPrefix(titles, scope, retained + 1)
+            : retained
       return `${formatPrefix(prefix)} ${input.checkpointTitle}`
     },
   }
@@ -46,11 +53,15 @@ export function readScopedPrefix(title: string, scope: string) {
   return Number.isSafeInteger(prefix) ? prefix : undefined
 }
 
-export function firstUnusedPrefix(titles: string[], scope: string) {
+export function hasForkSuffix(title: string) {
+  return forkSuffixPattern.test(title)
+}
+
+export function firstUnusedPrefix(titles: string[], scope: string, start = 0) {
   const used = new Set(
     titles.map((title) => readScopedPrefix(title, scope)).filter((value): value is number => value !== undefined),
   )
-  let prefix = 0
+  let prefix = start
   while (used.has(prefix)) prefix += 1
   return prefix
 }

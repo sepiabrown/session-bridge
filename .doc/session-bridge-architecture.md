@@ -24,7 +24,7 @@ Checkpoint callers provide the repository folders represented by the work. `src/
 
 ## Continuation title allocation
 
-`src/continuation_titles/open_code.ts` reads the normalized scope from the checkpoint title, then reads the active title and project session-title catalogue. A leading numeric source prefix (`00`, `01`, ...) is retained only when the active title has the same exact scope. Otherwise the smallest unused non-negative prefix within that scope is selected and padded to at least two digits. Distinct scopes therefore maintain independent `NN` namespaces. The resulting title is `NN <checkpointTitle>`. Callers may still provide an explicit continuation title override.
+`src/continuation_titles/open_code.ts` reads the normalized scope from the checkpoint title, then reads the active title and project session-title catalogue. A leading numeric source prefix (`00`, `01`, ...) is retained only when the active title has the same exact scope. A same-scope title ending in `(fork #N)` instead starts at the current prefix plus one and advances past occupied slots. Otherwise the smallest unused non-negative prefix within that scope is selected and padded to at least two digits. Distinct scopes therefore maintain independent `NN` namespaces. The resulting title is `NN <checkpointTitle>`. Callers may still provide an explicit continuation title override.
 
 ## OpenCode request boundary
 
@@ -60,4 +60,4 @@ A new host must implement `CurrentRequestMethod` and `SessionCheckpointMethod`; 
 
 ## Evidence
 
-`bun test` verifies working-scope normalization, custom suffix delimiters, per-scope continuation allocation, scope transitions, exact OpenCode boundary resolution, legacy-prefix migration, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.
+`bun test` verifies working-scope normalization, custom suffix delimiters, per-scope continuation allocation, fork increments and collisions, scope transitions, exact OpenCode boundary resolution, legacy-prefix migration, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.
