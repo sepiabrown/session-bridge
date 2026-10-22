@@ -5,14 +5,22 @@ type StoredSession = OpenCodeSession & { messages: OpenCodeMessage[] }
 export class OpenCodeHarness implements OpenCodeClient {
   readonly sessions = new Map<string, StoredSession>()
   failContinuationRename = false
+  messageListRequests = 0
   private forkNumber = 0
 
   readonly session = {
     list: async () =>
       this.response([...this.sessions.values()].map(({ messages: _messages, ...session }) => session)),
     get: async (input: { path: { id: string } }) => this.response(this.requireSession(input.path.id)),
-    messages: async (input: { path: { id: string } }) =>
-      this.response(structuredClone(this.requireSession(input.path.id).messages)),
+    messages: async (input: { path: { id: string } }) => {
+      this.messageListRequests++
+      return this.response(structuredClone(this.requireSession(input.path.id).messages))
+    },
+    message: async (input: { path: { id: string; messageID: string } }) => {
+      const message = this.requireSession(input.path.id).messages.find((item) => item.info.id === input.path.messageID)
+      if (!message) return { error: new Error(`Missing fake OpenCode message ${input.path.messageID}.`) }
+      return this.response(message)
+    },
     fork: async (input: { path: { id: string }; body?: { messageID?: string } }) => {
       const source = this.requireSession(input.path.id)
       const boundary = input.body?.messageID

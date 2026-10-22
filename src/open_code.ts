@@ -60,7 +60,7 @@ export const SessionBridgePlugin: Plugin = async (input) => {
         async execute(args, context) {
           const coordinate = await current(context)
           await context.ask({
-            permission: "session-checkpoint",
+            permission: "session_checkpoint",
             patterns: [coordinate.sessionID],
             always: [],
             metadata: { coordinate, names: args },
@@ -89,7 +89,7 @@ export const SessionBridgePlugin: Plugin = async (input) => {
         async execute(_args, context) {
           const coordinate = await current(context)
           await context.ask({
-            permission: "session-checkpoint-receipt",
+            permission: "session_checkpoint_receipt",
             patterns: [coordinate.sessionID],
             always: [],
             metadata: { coordinate },

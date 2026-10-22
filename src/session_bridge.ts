@@ -13,7 +13,7 @@ export type CurrentRequest = {
   sessionID: string
   excludedMessageID: string
   invocationMessageID: string
-  expectedCheckpointMessageCount: number
+  expectedCheckpointMessageCount?: number | undefined
   directory?: string | undefined
   endpoint?: string | undefined
   confidence: Confidence

@@ -18,8 +18,9 @@ describe("OpenCode current request", () => {
 
     expect(current.excludedMessageID).toBe("checkpoint-request")
     expect(current.invocationMessageID).toBe("checkpoint-response")
-    expect(current.expectedCheckpointMessageCount).toBe(2)
+    expect(current.expectedCheckpointMessageCount).toBeUndefined()
     expect(current.confidence).toBe("exact")
+    expect(client.messageListRequests).toBe(0)
   })
 
   test("resolves the parent request across assistant continuation messages", async () => {
@@ -45,6 +46,7 @@ describe("OpenCode current request", () => {
     })
 
     expect(current.excludedMessageID).toBe("checkpoint-request")
-    expect(current.expectedCheckpointMessageCount).toBe(2)
+    expect(current.expectedCheckpointMessageCount).toBeUndefined()
+    expect(client.messageListRequests).toBe(0)
   })
 })

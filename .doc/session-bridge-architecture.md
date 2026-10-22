@@ -28,7 +28,7 @@ Checkpoint callers provide the repository folders represented by the work. `src/
 
 ## OpenCode request boundary
 
-OpenCode tool context identifies the current assistant message. The excluded checkpoint request is the user message named by that assistant message's persisted `parentID`. `src/current_requests/open_code.ts` verifies the relationship from persisted session history before authorizing the operation. Assistant continuation messages may intervene in chronological storage, so adjacency is not required. Forking at the assistant ID is forbidden because it would include the checkpoint request.
+OpenCode tool context identifies the current assistant message. The excluded checkpoint request is the user message named by that assistant message's persisted `parentID`. `src/current_requests/open_code.ts` reads those two messages through the single-message endpoint and verifies their relationship before authorizing the operation. It never loads the full transcript: long sessions can contain gigabytes of tool output, and materializing that history inside the active OpenCode process can terminate the host. Assistant continuation messages may intervene in chronological storage, so adjacency is not required. Forking at the assistant ID is forbidden because it would include the checkpoint request.
 
 `src/session_checkpoints/open_code.ts` performs:
 
@@ -38,7 +38,7 @@ inspect source
   -> record checkpoint ID
   -> rename checkpoint
   -> rename live continuation
-  -> reread titles and checkpoint message count
+  -> reread both resulting titles
   -> record verified completion
 ```
 
@@ -48,7 +48,7 @@ OpenCode-compatible forks share this adapter when they preserve the OpenCode 1.2
 
 `src/open_code.ts` receives trusted native plugin context and can execute directly or issue a five-minute one-time receipt. `src/command_line.ts` and `src/model_context_protocol.ts` accept receipts, never raw session/message IDs as authorization. Receipts bind the host, source session, excluded request boundary, endpoint, confidence, expiry, and nonce. The replay ledger consumes each receipt once.
 
-Successful native calls return only the two resulting titles so routine evidence does not occupy future model context. Full operation identifiers and steps remain in the durable journal. Partial and blocked results return detailed JSON because recovery requires those diagnostics.
+Successful native calls return only the two resulting titles so routine evidence does not occupy future model context. Full operation identifiers and steps remain in the durable journal. Partial and blocked results return detailed JSON because recovery requires those diagnostics. Native permission requests use the registered tool IDs (`session_checkpoint` and `session_checkpoint_receipt`) so OpenCode evaluates the same permission coordinate that admitted the tool call; a separate punctuation variant is an unknown permission and may interrupt the active turn before an operation begins.
 
 ## Adding another host
 
@@ -60,4 +60,4 @@ A new host must implement `CurrentRequestMethod` and `SessionCheckpointMethod`; 
 
 ## Evidence
 
-`bun test` verifies working-scope normalization, custom suffix delimiters, per-scope continuation allocation, fork increments and collisions, scope transitions, exact OpenCode boundary resolution, legacy-prefix migration, title and message-count results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.
+`bun test` verifies working-scope normalization, custom suffix delimiters, per-scope continuation allocation, fork increments and collisions, scope transitions, exact bounded OpenCode boundary resolution, legacy-prefix migration, title results, completed retry idempotency, partial rename records, receipt replay rejection, confidence rejection, plugin integration, and explicit transcript archival. `bun run typecheck` verifies the public TypeScript interfaces.

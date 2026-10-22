@@ -27,6 +27,7 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
     worktree: "C:/project",
     serverUrl: new URL("http://localhost:4096"),
   } as unknown as PluginInput)
+  const permissionRequests: Array<{ permission: string; patterns: string[] }> = []
   const context = {
     sessionID: "source",
     messageID: "checkpoint-response",
@@ -35,12 +36,15 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
     worktree: "C:/project",
     abort: new AbortController().signal,
     metadata: () => {},
-    ask: async () => {},
+    ask: async (input: { permission: string; patterns: string[] }) => {
+      permissionRequests.push(input)
+    },
   } satisfies ToolContext
 
   const receiptOutput = await hooks.tool!.session_checkpoint_receipt!.execute({}, context)
   expect(typeof receiptOutput).toBe("string")
   expect(JSON.parse(typeof receiptOutput === "string" ? receiptOutput : receiptOutput.output).receipt).toStartWith("sbr1.")
+  expect(permissionRequests[0]).toMatchObject({ permission: "session_checkpoint_receipt", patterns: ["source"] })
 
   const checkpointOutput = await hooks.tool!.session_checkpoint!.execute(
     {
@@ -56,4 +60,6 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
   expect(checkpointOutput).not.toContain("sessionID")
   expect(client.sessions.get("fork-1")?.messages).toHaveLength(2)
   expect(client.sessions.get("source")?.title).toBe("00 session-bridge~260915___previous")
+  expect(permissionRequests[1]).toMatchObject({ permission: "session_checkpoint", patterns: ["source"] })
+  expect(client.messageListRequests).toBe(0)
 })

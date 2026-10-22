@@ -20,6 +20,10 @@ export type OpenCodeClient = {
       path: { id: string }
       query?: { directory?: string; limit?: number }
     }): RequestResult<OpenCodeMessage[]>
+    message(input: {
+      path: { id: string; messageID: string }
+      query?: { directory?: string }
+    }): RequestResult<OpenCodeMessage>
     fork(input: {
       path: { id: string }
       query?: { directory?: string }

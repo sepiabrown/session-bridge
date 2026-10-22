@@ -46,7 +46,7 @@ export function createOpenCodeCheckpointMethod(
       )
       await input.operation.record("continuation-renamed")
 
-      const [savedCheckpoint, savedContinuation, checkpointMessages] = await Promise.all([
+      const [savedCheckpoint, savedContinuation] = await Promise.all([
         unwrap(
           client.session.get({ path: { id: checkpoint.id }, ...(query ? { query } : {}) }),
           "verify the checkpoint session",
@@ -55,21 +55,12 @@ export function createOpenCodeCheckpointMethod(
           client.session.get({ path: { id: input.current.sessionID }, ...(query ? { query } : {}) }),
           "verify the continuation session",
         ),
-        unwrap(
-          client.session.messages({ path: { id: checkpoint.id }, ...(query ? { query } : {}) }),
-          "verify the checkpoint boundary",
-        ),
       ])
       if (savedCheckpoint.title !== input.names.checkpointTitle) {
         throw new Error("OpenCode did not preserve the requested checkpoint title.")
       }
       if (savedContinuation.title !== input.names.continuationTitle) {
         throw new Error("OpenCode did not preserve the requested continuation title.")
-      }
-      if (checkpointMessages.length !== input.current.expectedCheckpointMessageCount) {
-        throw new Error(
-          `Checkpoint contains ${checkpointMessages.length} messages; expected ${input.current.expectedCheckpointMessageCount}.`,
-        )
       }
       await input.operation.record("verified")
       return { checkpointSessionID: checkpoint.id }
