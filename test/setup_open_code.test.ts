@@ -16,7 +16,7 @@ describe("OpenCode plugin setup", () => {
     const result = await setupOpenCodePlugin({ targetDirectory: target })
 
     expect(result.status).toBe("installed")
-    expect(await readFile(result.pluginFile, "utf8")).toContain("src/open_code.ts")
+    expect(await readFile(result.pluginFile, "utf8")).toContain("src/open_code_plugin.ts")
   })
 
   test("installs a relative plugin loader into a sibling target project", async () => {
@@ -25,7 +25,7 @@ describe("OpenCode plugin setup", () => {
     const target = join(parent, "test")
     await mkdir(join(repository, "src"), { recursive: true })
     await mkdir(target)
-    await writeFile(join(repository, "src", "open_code.ts"), "export const SessionBridgePlugin = () => ({})\n")
+    await writeFile(join(repository, "src", "open_code_plugin.ts"), "export default { id: 'session-bridge', setup() {} }\n")
 
     const first = await setupOpenCodePlugin({
       targetDirectory: target,
@@ -40,9 +40,9 @@ describe("OpenCode plugin setup", () => {
 
     expect(first.status).toBe("installed")
     expect(second.status).toBe("unchanged")
-    expect(first.importPath).toBe("../../../session-bridge/src/open_code.ts")
+    expect(first.importPath).toBe("../../../session-bridge/src/open_code_plugin.ts")
     expect(await readFile(first.pluginFile, "utf8")).toBe(
-      'export { SessionBridgePlugin } from "../../../session-bridge/src/open_code.ts"\n',
+      'export { default } from "../../../session-bridge/src/open_code_plugin.ts"\n',
     )
   })
 
@@ -53,7 +53,7 @@ describe("OpenCode plugin setup", () => {
     const pluginDirectory = join(target, ".opencode", "plugins")
     await mkdir(join(repository, "src"), { recursive: true })
     await mkdir(pluginDirectory, { recursive: true })
-    await writeFile(join(repository, "src", "open_code.ts"), "export const SessionBridgePlugin = () => ({})\n")
+    await writeFile(join(repository, "src", "open_code_plugin.ts"), "export default { id: 'session-bridge', setup() {} }\n")
     await writeFile(join(pluginDirectory, "session-bridge.ts"), "export const keep = true\n")
 
     await expect(

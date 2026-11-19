@@ -11,6 +11,7 @@ const currentRequestSchema = z.object({
   sessionID: z.string().min(1),
   excludedMessageID: z.string().min(1),
   invocationMessageID: z.string().min(1),
+  activeTitle: z.string().min(1).max(200).optional(),
   expectedCheckpointMessageCount: z.number().int().nonnegative().optional(),
   directory: z.string().optional(),
   endpoint: z.string().url().optional(),

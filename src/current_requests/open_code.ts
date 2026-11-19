@@ -13,13 +13,22 @@ export type OpenCodeInvocation = {
 export const openCodeCurrentRequest: CurrentRequestMethod<OpenCodeInvocation> = {
   harness: "open-code",
   async resolve(input) {
-    const assistantMessage = await unwrap(
-      input.client.session.message({
-        path: { id: input.sessionID, messageID: input.assistantMessageID },
-        query: { directory: input.directory },
-      }),
-      "read the current OpenCode assistant message",
-    )
+    const [session, assistantMessage] = await Promise.all([
+      unwrap(
+        input.client.session.get({
+          path: { id: input.sessionID },
+          query: { directory: input.directory },
+        }),
+        "read the active OpenCode session",
+      ),
+      unwrap(
+        input.client.session.message({
+          path: { id: input.sessionID, messageID: input.assistantMessageID },
+          query: { directory: input.directory },
+        }),
+        "read the current OpenCode assistant message",
+      ),
+    ])
     const assistant = assistantMessage.info
     if (assistant.role !== "assistant") throw new Error("The current OpenCode invocation message is not an assistant message.")
     const requestMessage = await unwrap(
@@ -37,6 +46,7 @@ export const openCodeCurrentRequest: CurrentRequestMethod<OpenCodeInvocation> = 
       sessionID: input.sessionID,
       excludedMessageID: request.id,
       invocationMessageID: assistant.id,
+      activeTitle: session.title,
       directory: input.directory,
       endpoint: input.endpoint,
       confidence: "exact",

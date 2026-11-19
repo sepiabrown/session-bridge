@@ -20,7 +20,7 @@ export async function createSessionBridgeMcpServer() {
         receipt: z.string().min(1),
         workingFolders: z.array(z.string().min(1)).min(1),
         worktreeSuffixDelimiter: z.string().min(1).max(16).optional(),
-        checkpointTitle: z.string().min(1).max(200),
+        checkpointTitle: z.string().min(1).max(200).optional(),
         continuationTitle: z.string().min(1).max(200).optional(),
       }),
       annotations: { destructiveHint: false, idempotentHint: true },
@@ -34,7 +34,7 @@ export async function createSessionBridgeMcpServer() {
             ? { worktreeSuffixDelimiter: input.worktreeSuffixDelimiter }
             : {}),
           names: {
-            checkpointTitle: input.checkpointTitle,
+            ...(input.checkpointTitle ? { checkpointTitle: input.checkpointTitle } : {}),
             ...(input.continuationTitle ? { continuationTitle: input.continuationTitle } : {}),
           },
         },

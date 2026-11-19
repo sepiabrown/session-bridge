@@ -13,6 +13,7 @@ export type CurrentRequest = {
   sessionID: string
   excludedMessageID: string
   invocationMessageID: string
+  activeTitle?: string | undefined
   expectedCheckpointMessageCount?: number | undefined
   directory?: string | undefined
   endpoint?: string | undefined
@@ -69,10 +70,19 @@ export async function checkpointSession(
   try {
     const authorization = await authorize(input.authorization, runtime.authorizations)
     const scope = resolveWorkingScope(input)
+    const requestedCheckpointTitle = input.names.checkpointTitle
+    const preserveActiveTitle = requestedCheckpointTitle === undefined
+    const checkpointTitle = preserveActiveTitle
+      ? requireActiveTitle(authorization.current)
+      : scopeCheckpointTitle(scope, requestedCheckpointTitle)
     const names = await resolveContinuationTitle(
-      { ...input.names, checkpointTitle: scopeCheckpointTitle(scope, input.names.checkpointTitle) },
+      {
+        checkpointTitle,
+        ...(input.names.continuationTitle === undefined ? {} : { continuationTitle: input.names.continuationTitle }),
+      },
       authorization.current,
       runtime.continuationTitles,
+      { scope, advancePrefix: preserveActiveTitle },
     )
     const operation = await begin({ authorization, names }, runtime.operations)
     if (operation.type === "completed") return operation.result
@@ -90,6 +100,17 @@ export async function checkpointSession(
     if (isBlockedCheckpoint(error)) return error
     throw error
   }
+}
+
+function requireActiveTitle(current: CurrentRequest) {
+  const title = current.activeTitle?.trim()
+  if (!title) {
+    throw blocked(
+      "missing-active-title",
+      "Omitting checkpointTitle requires an authorization that captures the active session title.",
+    )
+  }
+  return title
 }
 
 async function completeCheckpoint(

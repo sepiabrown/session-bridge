@@ -74,12 +74,67 @@ describe("Session Bridge", () => {
     expect(result.status).toBe("complete")
     expect(setup.client.sessions.get("fork-1")?.messages).toHaveLength(2)
   })
+
+  test("preserves the active checkpoint title and uses an explicit continuation title", async () => {
+    const setup = await createSetup("05 session-bridge~260915~abc1234~painting")
+    const result = await checkpointSession(
+      {
+        authorization: { type: "trusted-invocation", current: setup.current },
+        workingFolders: ["session-bridge___unstable___00"],
+        names: { continuationTitle: "09 session-bridge~260915~abc1234~new-start" },
+      },
+      setup.runtime,
+    )
+
+    expect(result).toMatchObject({
+      status: "complete",
+      checkpointTitle: "05 session-bridge~260915~abc1234~painting",
+      continuationTitle: "09 session-bridge~260915~abc1234~new-start",
+    })
+    expect(setup.client.sessions.get("fork-1")?.title).toBe("05 session-bridge~260915~abc1234~painting")
+    expect(setup.client.sessions.get("source")?.title).toBe("09 session-bridge~260915~abc1234~new-start")
+  })
+
+  test("allocates the next continuation prefix when both titles are omitted", async () => {
+    const setup = await createSetup("05 session-bridge~260915~abc1234~painting")
+    setup.client.addSession({ id: "slot-6", title: "06 session-bridge~occupied", messages: [] })
+    const result = await checkpointSession(
+      {
+        authorization: { type: "trusted-invocation", current: setup.current },
+        workingFolders: ["session-bridge___unstable___00"],
+        names: {},
+      },
+      setup.runtime,
+    )
+
+    expect(result).toMatchObject({
+      status: "complete",
+      checkpointTitle: "05 session-bridge~260915~abc1234~painting",
+      continuationTitle: "07 session-bridge~260915~abc1234~painting",
+    })
+  })
+
+  test("blocks omission when a legacy authorization has no active title", async () => {
+    const setup = await createSetup()
+    const { activeTitle: _activeTitle, ...legacyCurrent } = setup.current
+    const result = await checkpointSession(
+      {
+        authorization: { type: "trusted-invocation", current: legacyCurrent },
+        workingFolders: ["session-bridge___unstable___00"],
+        names: {},
+      },
+      setup.runtime,
+    )
+
+    expect(result).toMatchObject({ status: "blocked", reason: "missing-active-title" })
+    expect([...setup.client.sessions.keys()].filter((id) => id.startsWith("fork-"))).toEqual([])
+  })
 })
 
-async function createSetup() {
+async function createSetup(title = "00 old") {
   const directory = await temporaryDirectory()
   const client = new OpenCodeHarness()
-  client.addSession({ id: "source", title: "00 old", messages: checkpointConversation() })
+  client.addSession({ id: "source", title, messages: checkpointConversation() })
   const current = await resolve(openCodeCurrentRequest, {
     client,
     sessionID: "source",

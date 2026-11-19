@@ -121,6 +121,22 @@ describe("continuation titles", () => {
     expect(names.continuationTitle).toBe("custom continuation")
   })
 
+  test("advances and carries the scoped body when preserving the current checkpoint title", async () => {
+    const client = new OpenCodeHarness()
+    client.addSession({ id: "source", title: "05 session-bridge~260917~abc1234~summary", messages: [] })
+    client.addSession({ id: "slot-6", title: "06 session-bridge~occupied", messages: [] })
+
+    const names = await resolveContinuationTitle(
+      { checkpointTitle: "05 session-bridge~260917~abc1234~summary" },
+      currentRequest(),
+      [createOpenCodeContinuationTitleMethod(client)],
+      { scope: "session-bridge", advancePrefix: true },
+    )
+
+    expect(names.checkpointTitle).toBe("05 session-bridge~260917~abc1234~summary")
+    expect(names.continuationTitle).toBe("07 session-bridge~260917~abc1234~summary")
+  })
+
   test("recognizes only leading numeric slots", () => {
     expect(readCheckpointScope("session-bridge~260917~abc1234~summary")).toBe("session-bridge")
     expect(readScopedPrefix("00 session-bridge~title", "session-bridge")).toBe(0)

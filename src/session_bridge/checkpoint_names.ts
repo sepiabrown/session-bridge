@@ -1,5 +1,5 @@
 export type CheckpointNameRequest = {
-  checkpointTitle: string
+  checkpointTitle?: string | undefined
   continuationTitle?: string | undefined
 }
 

@@ -18,6 +18,7 @@ describe("OpenCode current request", () => {
 
     expect(current.excludedMessageID).toBe("checkpoint-request")
     expect(current.invocationMessageID).toBe("checkpoint-response")
+    expect(current.activeTitle).toBe("latest")
     expect(current.expectedCheckpointMessageCount).toBeUndefined()
     expect(current.confidence).toBe("exact")
     expect(client.messageListRequests).toBe(0)

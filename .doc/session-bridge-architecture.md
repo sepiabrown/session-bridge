@@ -9,7 +9,7 @@ Session Bridge checkpoints a host conversation immediately before the current ch
 ```text
 validate trusted session context
   -> normalize committed working-folder scope
-  -> scope and validate checkpoint title
+  -> preserve the active title or scope and validate an explicit checkpoint title
   -> retain or allocate continuation prefix
   -> begin or recover durable operation
   -> select host checkpoint implementation
@@ -24,7 +24,7 @@ Checkpoint callers provide the repository folders represented by the work. `src/
 
 ## Continuation title allocation
 
-`src/continuation_titles/open_code.ts` reads the normalized scope from the checkpoint title, then reads the active title and project session-title catalogue. A leading numeric source prefix (`00`, `01`, ...) is retained only when the active title has the same exact scope. A same-scope title ending in `(fork #N)` instead starts at the current prefix plus one and advances past occupied slots. Otherwise the smallest unused non-negative prefix within that scope is selected and padded to at least two digits. Distinct scopes therefore maintain independent `NN` namespaces. The resulting title is `NN <checkpointTitle>`. Callers may still provide an explicit continuation title override.
+`src/continuation_titles/open_code.ts` receives the normalized scope, then reads the active title and project session-title catalogue. A leading numeric source prefix (`00`, `01`, ...) is retained only when the active title has the same exact scope. A same-scope title ending in `(fork #N)` instead starts at the current prefix plus one and advances past occupied slots. Otherwise the smallest unused non-negative prefix within that scope is selected and padded to at least two digits. Distinct scopes therefore maintain independent `NN` namespaces. The resulting title is `NN <checkpointTitle>`. Callers may still provide an explicit continuation title override. When `checkpointTitle` is omitted, the captured active title becomes the checkpoint title exactly; automatic continuation naming advances beyond its current scoped prefix so the two resulting titles remain distinct.
 
 ## OpenCode request boundary
 
@@ -44,6 +44,14 @@ inspect source
 
 OpenCode-compatible forks share this adapter when they preserve the OpenCode 1.2.20 Session API and the `@opencode-ai/plugin` 1.1.25 tool interface.
 
+### Native OpenCode V2
+
+`src/open_code_plugin.ts` default-exports the dual-host plugin definition. V2 calls its `setup`, which lazily loads `src/open_code_v2.ts`; V1 object-entrypoint hosts (1.18.29+) call `server`, which lazily loads the existing V1 adapter. The named V1 function in `src/open_code.ts` remains available to older direct integrations. Returning V1 hooks from a function does not register tools in V2.
+
+The V2 adapter registers `session_checkpoint` through the native tool transform and asks through `permission.assert`. A background server without that API is refused with restart guidance; launching a newer TUI does not update an already running server. V2 assistant messages do not carry the V1 `parentID`. A context hook captures user-role candidate IDs in the actual model request; bounded single-message reads skip synthetic/shell notices rendered as user-role and choose the latest persisted real user. The invoking assistant is verified too. Missing boundaries are refused; no full transcript is fetched. Native session fork uses `before` to exclude that user message. Renames and rereads verify both final titles. Continuation title allocation pages through the directory-scoped session catalogue, passing only the returned cursor and page limit on subsequent requests.
+
+Public V2 client methods supply fork and single-message reads that the plugin context does not expose. Connection discovery is lazy and never starts or replaces a service. It uses the matching-version managed service and channel, or explicit plugin `options.server: { url, headers? }` for standalone/explicit servers. V2 currently registers only the native checkpoint tool; signed receipt issuance and the CLI/MCP transport remain V1-only. Existing authorization, journal, scope normalization, and continuation-prefix semantics remain shared.
+
 ## CLI and MCP entry points
 
 `src/open_code.ts` receives trusted native plugin context and can execute directly or issue a five-minute one-time receipt. `src/command_line.ts` and `src/model_context_protocol.ts` accept receipts, never raw session/message IDs as authorization. Receipts bind the host, source session, excluded request boundary, endpoint, confidence, expiry, and nonce. The replay ledger consumes each receipt once.
@@ -56,7 +64,7 @@ A new host must implement `CurrentRequestMethod` and `SessionCheckpointMethod`; 
 
 ## Project setup
 
-`src/setup_open_code.ts` validates an existing target project, derives the import from `<target>/.opencode/plugins/session-bridge.ts` to this checkout's `src/open_code.ts`, and writes the loader only when the destination is absent or already identical. It uses a relative module path when both locations share a filesystem root and a file URL when they do not. Existing different content produces an explicit conflict unless the caller reviewed it and supplied `--force`.
+`src/setup_open_code.ts` validates an existing target project, derives a default re-export from `<target>/.opencode/plugins/session-bridge.ts` to this checkout's `src/open_code_plugin.ts`, and writes the loader only when the destination is absent or already identical. It verifies the default definition's ID and setup function, not merely a named V1 function. It uses a relative module path when both locations share a filesystem root and a file URL when they do not. Existing different content produces an explicit conflict unless the caller reviewed it and supplied `--force`.
 
 ## Evidence
 

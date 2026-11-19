@@ -60,6 +60,18 @@ bun run setup:open-code -- <target-directory>
 
 Restart OpenCode after setup so it discovers the new local plugin.
 
+The generated loader default-exports the dual-host definition from
+`src/open_code_plugin.ts`. OpenCode V2 uses its native `setup` adapter; V1
+object-entrypoint hosts require 1.18.29 or newer and use its `server` adapter.
+An older loader that only exports the named V1 function must be reviewed and
+replaced with `--force`; merely restarting V2 cannot make a V1-only loader work.
+If a V2 background server already loaded the project, restarting only the TUI
+may retain its plugin runtime. Reload the project or restart that server with
+the user's approval when live sessions would be affected.
+The V2 server must expose `permission.assert`. If it reports a missing API,
+restart/update the background server from the intended OpenCode checkout rather
+than bypassing permissions or merely relaunching the TUI.
+
 ## Nix, NixOS, and nix-darwin
 
 The included `flake.nix` provides the supported Bun, Node.js, and Git tools on

@@ -9,6 +9,7 @@ export type BlockedCheckpoint = {
     | "operation-conflict"
     | "effect-uncertain"
     | "unsupported-title-allocation"
+    | "missing-active-title"
   error: string
 }
 

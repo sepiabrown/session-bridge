@@ -25,13 +25,13 @@ export async function setupOpenCodePlugin(input: OpenCodeSetupInput): Promise<Op
   await requireDirectory(targetDirectory, "Target project")
   await requireDirectory(repositoryRoot, "Session Bridge repository")
 
-  const pluginSource = resolve(repositoryRoot, "src", "open_code.ts")
+  const pluginSource = resolve(repositoryRoot, "src", "open_code_plugin.ts")
   await requireFile(pluginSource, "Session Bridge OpenCode plugin")
   const pluginDirectory = resolve(targetDirectory, ".opencode", "plugins")
   const pluginFile = resolve(pluginDirectory, "session-bridge.ts")
   const relativeImport = relative(pluginDirectory, pluginSource)
   const importPath = isAbsolute(relativeImport) ? pathToFileURL(pluginSource).href : modulePath(relativeImport)
-  const content = `export { SessionBridgePlugin } from ${JSON.stringify(importPath)}\n`
+  const content = `export { default } from ${JSON.stringify(importPath)}\n`
 
   await mkdir(pluginDirectory, { recursive: true })
   const existing = await optionalText(pluginFile)
@@ -43,8 +43,8 @@ export async function setupOpenCodePlugin(input: OpenCodeSetupInput): Promise<Op
 
   if (input.verifyImport !== false) {
     const loaded = await import(`${pathToFileURL(pluginSource).href}?setup=${Date.now()}`)
-    if (typeof loaded.SessionBridgePlugin !== "function") {
-      throw new Error(`${pluginSource} did not export SessionBridgePlugin.`)
+    if (loaded.default?.id !== "session-bridge" || typeof loaded.default?.setup !== "function") {
+      throw new Error(`${pluginSource} did not default-export the Session Bridge plugin definition.`)
     }
   }
 

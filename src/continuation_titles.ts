@@ -9,13 +9,19 @@ import {
 
 export interface ContinuationTitleMethod {
   harness: string
-  allocate(input: { current: CurrentRequest; checkpointTitle: string }): Promise<string>
+  allocate(input: {
+    current: CurrentRequest
+    checkpointTitle: string
+    scope?: string | undefined
+    advancePrefix?: boolean | undefined
+  }): Promise<string>
 }
 
 export async function resolveContinuationTitle(
-  input: CheckpointNameRequest,
+  input: CheckpointNameRequest & { checkpointTitle: string },
   current: CurrentRequest,
   methods: ContinuationTitleMethod[],
+  options?: { scope?: string | undefined; advancePrefix?: boolean | undefined },
 ): Promise<CheckpointNames> {
   const checkpointTitle = requireCheckpointTitle(input.checkpointTitle)
   if (input.continuationTitle !== undefined) {
@@ -29,5 +35,5 @@ export async function resolveContinuationTitle(
       `No continuation-title allocator owns harness ${JSON.stringify(current.harness)}.`,
     )
   }
-  return completeNames(checkpointTitle, await method.allocate({ current, checkpointTitle }))
+  return completeNames(checkpointTitle, await method.allocate({ current, checkpointTitle, ...options }))
 }

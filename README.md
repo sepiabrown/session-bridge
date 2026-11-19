@@ -10,11 +10,13 @@ raw session or message identifiers are not accepted as mutation authority.
 
 ## OpenCode compatibility
 
-Add `src/open_code.ts` as an OpenCode-compatible plugin, then call
-`session_checkpoint` with the repository `workingFolders` and an explicit
-`checkpointTitle`. The plugin resolves the current assistant message's
-user parent and forks before that parent, so the checkpoint request is
-not copied into the checkpoint.
+Install the default-exported definition in `src/open_code_plugin.ts`, then call
+`session_checkpoint` with the repository `workingFolders`. Supply
+`checkpointTitle` to use the existing scoped-title behavior, or omit it to
+preserve the active session title exactly. V1 resolves the assistant message's
+user parent; V2 captures the user-message ID from the actual model request and
+verifies persisted message types. Both fork before that user request, so the
+checkpoint request is not copied into the checkpoint.
 
 Each working folder is reduced to its basename, cut at the first `___` by
 default, and normalized to kebab-case. Scopes are deduplicated and joined with
@@ -33,6 +35,12 @@ that exact scope and produces `NN <checkpointTitle>`. Different repository
 scopes therefore each begin at `00`. An explicit `continuationTitle` remains
 available as an override.
 
+When `checkpointTitle` is omitted, the checkpoint retains the active session
+title byte-for-byte. An explicit `continuationTitle` is still used exactly. If
+both titles are omitted, Session Bridge advances to the next unused numeric
+prefix in the current repository scope and carries forward the scoped title
+body for the continuation.
+
 When the active title has the same scope and ends with `(fork #N)`, allocation
 starts at its current numeric prefix plus one and advances past any occupied
 slots. Non-fork sessions retain their current same-scope prefix.
@@ -41,9 +49,11 @@ Successful native plugin calls return only the checkpoint and continuation
 titles. Full identifiers and operation progress remain in the durable operation
 journal; blocked and partial results retain detailed diagnostic output.
 
-The supported compatibility coordinates are current OpenCode 1.18.x and forks
-that preserve the OpenCode 1.2.20 server surface with the string-returning
-`@opencode-ai/plugin` 1.1.25 tool contract.
+OpenCode V2 (2.3.x plugin/client API) uses native tool transforms and permission
+assertions. The dual-host entrypoint also supports V1 1.18.29+ through its lazy
+`server` adapter; older V1 direct integrations may still import `src/open_code.ts`.
+V1-compatible forks must preserve the OpenCode 1.2.20 server surface and
+`@opencode-ai/plugin` string-returning tool contract.
 
 ## Setup
 
@@ -63,16 +73,21 @@ the target project directory, then ask it to follow `INSTALL.md`. Setup supports
 Windows, Linux, and macOS; Nix users can enter the included development shell
 with `nix develop`.
 
-The plugin also exposes `session_checkpoint_receipt`. It returns a five-minute,
+The V1 adapter also exposes `session_checkpoint_receipt`. It returns a five-minute,
 one-time receipt for a separate CLI or MCP process. The receipt binds the exact
 harness, session, request boundary, API endpoint, expiry, and nonce.
+
+V2 currently provides native `session_checkpoint` only. It lazily discovers the
+matching managed background service without starting or replacing it. Explicit
+or standalone servers must set plugin `options.server` with `url` and optional
+`headers`; receipt transport through CLI/MCP is not yet supported for V2.
 
 ## CLI and MCP
 
 The CLI accepts no raw session or message identifiers:
 
 ```text
-session-bridge checkpoint --receipt <receipt> --working-folders <folder[,folder]> --checkpoint-title <checkpoint-title> [--worktree-suffix-delimiter <delimiter>] [--continuation-title <title>]
+session-bridge checkpoint --receipt <receipt> --working-folders <folder[,folder]> [--checkpoint-title <checkpoint-title>] [--worktree-suffix-delimiter <delimiter>] [--continuation-title <title>]
 ```
 
 Start the stdio MCP server with `session-bridge-mcp`. Its

@@ -25,18 +25,27 @@ export function createOpenCodeContinuationTitleMethod(
         ),
       ])
 
-      const scope = readCheckpointScope(input.checkpointTitle)
+      const scope = input.scope ?? readCheckpointScope(input.checkpointTitle)
       const retained = readScopedPrefix(currentSession.title, scope)
       const titles = sessions.map((session) => session.title)
       const prefix =
-        retained === undefined
+        input.advancePrefix
+          ? firstUnusedPrefix(titles, scope, retained === undefined ? 0 : retained + 1)
+          : retained === undefined
           ? firstUnusedPrefix(titles, scope)
           : hasForkSuffix(currentSession.title)
             ? firstUnusedPrefix(titles, scope, retained + 1)
             : retained
-      return `${formatPrefix(prefix)} ${input.checkpointTitle}`
+      return `${formatPrefix(prefix)} ${continuationBase(input.checkpointTitle, scope)}`
     },
   }
+}
+
+export function continuationBase(checkpointTitle: string, scope: string) {
+  const prefix = readScopedPrefix(checkpointTitle, scope)
+  if (prefix !== undefined) return checkpointTitle.replace(/^\d{2,}\s+/, "")
+  if (checkpointTitle.startsWith(`${scope}~`)) return checkpointTitle
+  return `${scope}~${checkpointTitle}`
 }
 
 export function readCheckpointScope(checkpointTitle: string) {

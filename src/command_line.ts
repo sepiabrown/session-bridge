@@ -15,7 +15,7 @@ export async function runCommandLine(arguments_: string[]) {
           ? { worktreeSuffixDelimiter: input.worktreeSuffixDelimiter }
           : {}),
         names: {
-          checkpointTitle: input.checkpointTitle,
+          ...(input.checkpointTitle ? { checkpointTitle: input.checkpointTitle } : {}),
           ...(input.continuationTitle ? { continuationTitle: input.continuationTitle } : {}),
         },
       },
@@ -60,7 +60,7 @@ function parseCheckpointArguments(arguments_: string[]) {
       .map((folder) => folder.trim())
       .filter(Boolean),
     worktreeSuffixDelimiter: values.get("worktree-suffix-delimiter"),
-    checkpointTitle: requireArgument(values, "checkpoint-title"),
+    checkpointTitle: values.get("checkpoint-title"),
     continuationTitle: values.get("continuation-title"),
   }
 }
@@ -74,7 +74,7 @@ function requireArgument(values: Map<string, string>, name: string) {
 function usage() {
   return [
     "Usage:",
-    "  session-bridge checkpoint --receipt <receipt> --working-folders <folder[,folder]> --checkpoint-title <title> [--worktree-suffix-delimiter <delimiter>] [--continuation-title <title>]",
+    "  session-bridge checkpoint --receipt <receipt> --working-folders <folder[,folder]> [--checkpoint-title <title>] [--worktree-suffix-delimiter <delimiter>] [--continuation-title <title>]",
     "  session-bridge probe",
   ].join("\n")
 }

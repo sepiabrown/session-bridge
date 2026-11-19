@@ -20,7 +20,7 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
   directories.push(directory)
   process.env.SESSION_BRIDGE_STATE_DIR = directory
   const client = new OpenCodeHarness()
-  client.addSession({ id: "source", title: "00 old", messages: checkpointConversation() })
+  client.addSession({ id: "source", title: "05 session-bridge~260915~abc1234~painting", messages: checkpointConversation() })
   const hooks = await SessionBridgePlugin({
     client,
     directory: "C:/project",
@@ -49,17 +49,18 @@ test("OpenCode plugin resolves authority and performs the checkpoint", async () 
   const checkpointOutput = await hooks.tool!.session_checkpoint!.execute(
     {
       workingFolders: ["session-bridge___unstable___00"],
-      checkpointTitle: "260915___previous",
+      continuationTitle: "09 session-bridge~260915~abc1234~new-start",
     },
     context,
   )
   expect(checkpointOutput).toBe(
-    "Checkpoint created: session-bridge~260915___previous\nContinuation: 00 session-bridge~260915___previous",
+    "Checkpoint created: 05 session-bridge~260915~abc1234~painting\nContinuation: 09 session-bridge~260915~abc1234~new-start",
   )
   expect(checkpointOutput).not.toContain("operationID")
   expect(checkpointOutput).not.toContain("sessionID")
   expect(client.sessions.get("fork-1")?.messages).toHaveLength(2)
-  expect(client.sessions.get("source")?.title).toBe("00 session-bridge~260915___previous")
+  expect(client.sessions.get("fork-1")?.title).toBe("05 session-bridge~260915~abc1234~painting")
+  expect(client.sessions.get("source")?.title).toBe("09 session-bridge~260915~abc1234~new-start")
   expect(permissionRequests[1]).toMatchObject({ permission: "session_checkpoint", patterns: ["source"] })
   expect(client.messageListRequests).toBe(0)
 })

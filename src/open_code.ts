@@ -24,7 +24,12 @@ const titleArguments = {
     .max(16)
     .optional()
     .describe("Optional worktree suffix cutoff marker; defaults to ___"),
-  checkpointTitle: pluginSchema.string().min(1).max(200).describe("Title for the checkpoint ending before this request"),
+  checkpointTitle: pluginSchema
+    .string()
+    .min(1)
+    .max(200)
+    .optional()
+    .describe("Optional checkpoint title; omit to preserve the active session title exactly"),
   continuationTitle: pluginSchema
     .string()
     .min(1)
@@ -73,7 +78,7 @@ export const SessionBridgePlugin: Plugin = async (input) => {
                 ? { worktreeSuffixDelimiter: args.worktreeSuffixDelimiter }
                 : {}),
               names: {
-                checkpointTitle: args.checkpointTitle,
+                ...(args.checkpointTitle ? { checkpointTitle: args.checkpointTitle } : {}),
                 ...(args.continuationTitle ? { continuationTitle: args.continuationTitle } : {}),
               },
             },
